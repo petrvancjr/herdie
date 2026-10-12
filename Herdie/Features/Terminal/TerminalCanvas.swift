@@ -87,6 +87,7 @@ struct TerminalCanvas: UIViewRepresentable {
     var fontSize: CGFloat
     var bottomClearance: CGFloat = 0
     var toolbarActions: [ToolbarAction]
+    var showsToolbar = true
     var controlArmed: Bool
     var onToolbarAction: (ToolbarAction) -> Void
     var focusGeneration: Int
@@ -129,6 +130,7 @@ struct TerminalCanvas: UIViewRepresentable {
         view.fontSize = fontSize
         view.onToolbarAction = onToolbarAction
         view.configureAccessory(actions: toolbarActions, controlArmed: controlArmed)
+        view.showsAccessory = showsToolbar
         if view.terminalFrame != terminalFrame {
             view.terminalFrame = terminalFrame
         }
@@ -256,7 +258,10 @@ final class TerminalCanvasView: UIView, UIKeyInput, UIContextMenuInteractionDele
         return toolbar
     }()
 
-    override var inputAccessoryView: UIView? { accessoryToolbar }
+    var showsAccessory = true {
+        didSet { if oldValue != showsAccessory { reloadInputViews() } }
+    }
+    override var inputAccessoryView: UIView? { showsAccessory ? accessoryToolbar : nil }
 
     func configureAccessory(actions: [ToolbarAction], controlArmed: Bool) {
         guard accessoryActions != actions || accessoryControlArmed != controlArmed || accessoryToolbar.items == nil else { return }

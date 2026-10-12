@@ -32,6 +32,9 @@ final class AppPreferences {
     var composerMode: Bool { didSet { save() } }
     var autoSend: Bool { didSet { save() } }
     var toolbarActions: [ToolbarAction] { didSet { save() } }
+    /// Hide touch controls and keep the terminal focused while a hardware keyboard is connected.
+    var hardwareKeyboardMode: Bool { didSet { save() } }
+    var hardwareKeyboardHidesToolbar: Bool { didSet { save() } }
 
     private let defaults: UserDefaults
     private let key = "herdie.preferences.v1"
@@ -52,6 +55,8 @@ final class AppPreferences {
             terminalFontSize = min(max(stored.terminalFontSize ?? 14, 11), 20)
             autoSend = stored.autoSend
             toolbarActions = stored.toolbarActions.isEmpty ? ToolbarAction.defaults : stored.toolbarActions
+            hardwareKeyboardMode = stored.hardwareKeyboardMode ?? false
+            hardwareKeyboardHidesToolbar = stored.hardwareKeyboardHidesToolbar ?? false
         } else {
             composerMode = false
             appearance = .system
@@ -59,6 +64,8 @@ final class AppPreferences {
             terminalFontSize = 14
             autoSend = false
             toolbarActions = ToolbarAction.defaults
+            hardwareKeyboardMode = false
+            hardwareKeyboardHidesToolbar = false
         }
         isLoading = false
     }
@@ -73,6 +80,8 @@ final class AppPreferences {
             composerMode: composerMode,
             autoSend: autoSend,
             toolbarActions: toolbarActions,
+            hardwareKeyboardMode: hardwareKeyboardMode,
+            hardwareKeyboardHidesToolbar: hardwareKeyboardHidesToolbar,
             appearance: appearance,
             terminalTheme: terminalTheme,
             terminalFontSize: terminalFontSize
@@ -86,6 +95,8 @@ final class AppPreferences {
         var composerMode: Bool
         var autoSend: Bool
         var toolbarActions: [ToolbarAction]
+        var hardwareKeyboardMode: Bool?
+        var hardwareKeyboardHidesToolbar: Bool?
         var appearance: AppAppearance?
         var terminalTheme: TerminalTheme?
         var terminalFontSize: Double?

@@ -18,6 +18,22 @@ final class PersistenceTests: XCTestCase {
         XCTAssertFalse(AppPreferences(defaults: defaults).showsMakerCard)
     }
 
+    func testHardwareKeyboardPreferencesPersist() throws {
+        let suiteName = "HerdieTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let preferences = AppPreferences(defaults: defaults)
+        XCTAssertFalse(preferences.hardwareKeyboardMode)
+        XCTAssertFalse(preferences.hardwareKeyboardHidesToolbar)
+        preferences.hardwareKeyboardMode = true
+        preferences.hardwareKeyboardHidesToolbar = true
+
+        let reloaded = AppPreferences(defaults: defaults)
+        XCTAssertTrue(reloaded.hardwareKeyboardMode)
+        XCTAssertTrue(reloaded.hardwareKeyboardHidesToolbar)
+    }
+
     func testMetadataRepositoryDoesNotContainCredentials() throws {
         let suiteName = "HerdieTests.\(UUID().uuidString)"
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))

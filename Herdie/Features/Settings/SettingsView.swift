@@ -43,6 +43,17 @@ struct SettingsView: View {
                         )
                     }
                     .accessibilityLabel("Toolbar")
+
+                    NavigationLink {
+                        HardwareKeyboardSettingsView(preferences: preferences)
+                    } label: {
+                        SettingsRow(
+                            title: "Hardware keyboard",
+                            subtitle: "Keyboard-only mode with Herdr shortcuts",
+                            symbol: "keyboard"
+                        )
+                    }
+                    .accessibilityLabel("Hardware keyboard")
                 }
 
                 Section("Connection") {
@@ -236,6 +247,25 @@ struct ToolbarSettingsView: View {
         .frame(minWidth: 44, minHeight: 42)
         .padding(.horizontal, action.systemImage == nil ? 5 : 0)
         .background(HerdieTheme.raisedSurface, in: RoundedRectangle(cornerRadius: 14))
+    }
+}
+
+struct HardwareKeyboardSettingsView: View {
+    @Bindable var preferences: AppPreferences
+
+    var body: some View {
+        List {
+            Section {
+                Toggle("Keyboard-only mode", isOn: $preferences.hardwareKeyboardMode)
+                Toggle("Hide toolbar row", isOn: $preferences.hardwareKeyboardHidesToolbar)
+                    .disabled(!preferences.hardwareKeyboardMode)
+            } footer: {
+                Text("While a hardware keyboard is connected, Herdie hides Agents, Write and Keyboard and keeps the terminal focused. Navigate with your Herdr prefix, for example prefix then g to jump to an agent. Hide toolbar row also removes the Ctrl, Esc and arrow keys above the keyboard. Controls return when the keyboard disconnects.")
+            }
+        }
+        .scrollContentBackground(.hidden)
+        .background(HerdieTheme.background)
+        .navigationTitle("Hardware keyboard")
     }
 }
 

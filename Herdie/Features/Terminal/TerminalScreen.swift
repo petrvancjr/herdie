@@ -1,3 +1,4 @@
+import GameController
 import SwiftUI
 import UIKit
 
@@ -21,7 +22,13 @@ struct TerminalScreen: View {
     @State private var keyboardVisible = false
     @State private var focusMode = false
     @State private var dockCollapsed = false
-    private var showsDock: Bool { !focusMode && (!keyboardVisible || showingWriting) }
+    private var showsDock: Bool { !focusMode && !keyboardOnly && (!keyboardVisible || showingWriting) }
+    @State private var hardwareKeyboardConnected = GCKeyboard.coalesced != nil
+    private var keyboardOnly: Bool { environment.preferences.hardwareKeyboardMode && hardwareKeyboardConnected }
+    private var wantsKeyboardFocus: Bool {
+        keyboardOnly && model.state == .attached && !(showingWorkspaces || showingAgents || showingReader
+            || showingWriting || showingTerminalAppearance || showingDetails)
+    }
     @State private var loadingVisible = false
     @State private var showingDetails = false
     @State private var submissionFeedback = 0
@@ -52,6 +59,7 @@ struct TerminalScreen: View {
                     // Remote mouse-wheel scrolling does not update local scrollbackOffset.
                     // Release the prompt clearance while browsing behind the collapsed dock.
                     bottomClearance: keyboardVisible || dockCollapsed ? 0 : geometry.safeAreaInsets.bottom + (showsDock ? 76 : 0),
+                    showsToolbar: !(keyboardOnly && environment.preferences.hardwareKeyboardHidesToolbar),
                     onScrollDirection: { rows in
                         if rows != 0 { dockCollapsed = rows > 0 }
                     },
@@ -143,6 +151,16 @@ struct TerminalScreen: View {
                 let cadence: Duration = model.state == .attached ? .milliseconds(16) : .milliseconds(100)
                 try? await Task.sleep(for: cadence)
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .GCKeyboardDidConnect)) { _ in
+            hardwareKeyboardConnected = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .GCKeyboardDidDisconnect)) { _ in
+            hardwareKeyboardConnected = false
+        }
+        .onChange(of: wantsKeyboardFocus) { _, wants in
+            // Hardware keys reach the terminal only while it is first responder.
+            if wants { model.perform(.keyboard) }
         }
         .onChange(of: scenePhase) { _, phase in
             switch phase {
@@ -433,6 +451,7 @@ private struct LiveTerminalCanvas: View {
     let model: TerminalViewModel
     let preferences: AppPreferences
     let bottomClearance: CGFloat
+    let showsToolbar: Bool
     let onScrollDirection: (Int) -> Void
     let onResize: (UInt16, UInt16) -> Void
     let onPaste: () -> Void
@@ -445,6 +464,7 @@ private struct LiveTerminalCanvas: View {
             fontSize: CGFloat(preferences.terminalFontSize),
             bottomClearance: bottomClearance,
             toolbarActions: preferences.toolbarActions.filter { $0 != .keyboard && $0 != .composer },
+            showsToolbar: showsToolbar,
             controlArmed: model.controlArmed,
             onToolbarAction: model.perform,
             focusGeneration: model.keyboardGeneration,
